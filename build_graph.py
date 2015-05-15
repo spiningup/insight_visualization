@@ -72,36 +72,40 @@ def make_json(g, SeedNodeId, filename='graph.json'):
         j = NJ.GetDstNId()
         edges.append([i,j])
 
+    # idx: index mapping from node_id to new compact node_id
+    # revidx: new compact node_id to old node_id
     x = np.argsort(nodes)
     idx = {}
+    revidx = {}
     for id in x:
         idx[nodes[x[id]]] = id
-
+        revidx[id] = nodes[x[id]]
 
     seednode_sorted = idx[SeedNodeId]
     one_hop_sorted = [idx[i] for i in one_hop]
 
-    clustering_coef = []
+    # key : node_id, value : coef/triads
+    clustering_coef = {} 
     NIdCCfH = g.get_clustering_coeffs()
     for item in NIdCCfH:
-        clustering_coef.append(NIdCCfH[item])
+        clustering_coef[item] = NIdCCfH[item]
 
-    triads = [i[1] for i in g.get_triads()]
+    triads = {i[0]: i[1] for i in g.get_triads()}
 
     print >> f2, '{'
     print >> f2, '  "text": ['
     print >> f2, '    {"x":20, "y":30, "textvalue": "Number of Nodes : %d"},'%(NNodes) 
     print >> f2, '    {"x":20, "y":50, "textvalue": "Number of Edges : %d"},'%(NEdges)
     print >> f2, '    {"x":20, "y":70, "textvalue": "Number of One-hop Nodes : %d"},'%(len(one_hop)) 
-    print >> f2, '    {"x":20, "y":90, "textvalue": "Min Clustering Coef : %5.2f"},'%(min(clustering_coef))
-    print >> f2, '    {"x":20, "y":110, "textvalue": "Max Clustering Coef : %5.2f"},'%(max(clustering_coef))
-    print >> f2, '    {"x":20, "y":130, "textvalue": "Avg Clustering Coef : %5.2f"},'%(np.mean(clustering_coef))
-    print >> f2, '    {"x":20, "y":150, "textvalue": "Std Clustering Coef : %5.2f"},'%(np.std(clustering_coef))
-    print >> f2, '    {"x":20, "y":170, "textvalue": "Min Triads : %d"},'%(min(triads))
-    print >> f2, '    {"x":20, "y":190, "textvalue": "Max Triads : %d"},'%(max(triads))
-    print >> f2, '    {"x":20, "y":210, "textvalue": "Avg Triads : %5.2f"},'%(np.mean(triads))
-    print >> f2, '    {"x":20, "y":230, "textvalue": "Std Triads : %5.2f"},'%(np.std(triads))
-    print >> f2, '    {"x":20, "y":250, "textvalue": "Sum Triads : %d"}'%(np.sum(triads))
+    print >> f2, '    {"x":20, "y":90, "textvalue": "Min Clustering Coef : %5.2f"},'%(min(clustering_coef.values()))
+    print >> f2, '    {"x":20, "y":110, "textvalue": "Max Clustering Coef : %5.2f"},'%(max(clustering_coef.values()))
+    print >> f2, '    {"x":20, "y":130, "textvalue": "Avg Clustering Coef : %5.2f"},'%(np.mean(clustering_coef.values()))
+    print >> f2, '    {"x":20, "y":150, "textvalue": "Std Clustering Coef : %5.2f"},'%(np.std(clustering_coef.values()))
+    print >> f2, '    {"x":20, "y":170, "textvalue": "Min Triads : %d"},'%(min(triads.values()))
+    print >> f2, '    {"x":20, "y":190, "textvalue": "Max Triads : %d"},'%(max(triads.values()))
+    print >> f2, '    {"x":20, "y":210, "textvalue": "Avg Triads : %5.2f"},'%(np.mean(triads.values()))
+    print >> f2, '    {"x":20, "y":230, "textvalue": "Std Triads : %5.2f"},'%(np.std(triads.values()))
+    print >> f2, '    {"x":20, "y":250, "textvalue": "Sum Triads : %d"}'%(np.sum(triads.values()))
     print >> f2, '  ],'
     print >> f2, '  "nodes":['
     id = 0
@@ -112,10 +116,17 @@ def make_json(g, SeedNodeId, filename='graph.json'):
             group = 2
         else:
             group = 3
+
+        c = clustering_coef[revidx[i]]
+        t = triads[revidx[i]]
+        deg = Graph.GetNI(revidx[i]).GetDeg()
+
         if id == NNodes -1: 
-            print >> f2, '    {"name":"%s","group":%s}'%(i, group)
+            print >> f2, '    {"name":"%s","group":%s,"coef":%5.2f,"triads":%d,"deg":%d}'%(
+                i, group,c, t, deg)
         else:
-            print >> f2, '    {"name":"%s","group":%s},'%(i, group)
+            print >> f2, '    {"name":"%s","group":%s,"coef":%5.2f,"triads":%d,"deg":%d},'%(
+                i, group, c, t, deg)
         id += 1
     print >> f2, '  ],'
 
@@ -149,7 +160,7 @@ if __name__ == '__main__':
         SubGraph = get_subgraph(Graph, SeedNodeId, depth=2)
         g = graph_helper(SubGraph)
         one_hop = g.get_neighbors(SeedNodeId)
-        if SubGraph.GetNodes() > 100 and len(one_hop) > 10:
+        if SubGraph.GetNodes() > 200 and len(one_hop) > 10:
             make_json(g, SeedNodeId, filename='graph_%s.json'%(i_graph))    
             print 'seed node Id', SeedNodeId
             print 'number of one, two hop nodes', len(one_hop), SubGraph.GetNodes()

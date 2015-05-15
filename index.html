@@ -1,5 +1,8 @@
 <!DOCTYPE html>
 <meta charset="utf-8">
+<head>
+<link rel="stylesheet" type="text/css" href="mystyle.css">
+</head>
 <style>
 
 .node {
@@ -14,27 +17,41 @@
 
 </style>
 <body>
-<button id="button">Next Person</button>
+<button id="button1">Previous Person</button>
+<button id="button2">Next Person</button>
 <label for="counter" 
        style="display: inline-block; width: 120px; text-align: right">
        Jump to Person <span id="counter-value"></span>
 </label>
-<input type="number" min="0" max="483" step="1" value="0" id="counter">
+<input type="number" min="0" max="200" step="1" value="0" id="counter">
 <div id="chart"></div>
+<div id="tooltip" class="hidden">
+  <p>Coef/Triads : <span id="coeftriads">0/0</span></p>
+</div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 
 var counter = 0;
-var maxcounter = 483;
+var maxcounter = 600;
 
 var fileArray = [];
 for (i = 0; i < maxcounter; i++){
-  fileArray.push("graph/graph_"+i+".json")
+  fileArray.push("graph_"+i+".json")
 }
 
 draw()
 
-d3.select("#button")
+d3.select("#button1")
+  .on("click", function () {
+    if (counter === 0) {
+      counter = 0;
+    } else {
+      counter--;
+    }
+   draw();
+  });
+
+d3.select("#button2")
   .on("click", function () {
     if (counter === fileArray.length - 1) {
       counter = 0;
@@ -63,9 +80,10 @@ function draw() {
 function network() {
   var width = 1280;
   var height = 700;
-  var charge = -120;
-  var linkDistance = 30;
+  var charge = -60;
+  var linkDistance = 10;
   var color = d3.scale.category10();
+  var dispatch = d3.dispatch("mouseover", "click");
 
   function chart(selection) {
     selection.each(function (data, index) {
@@ -81,6 +99,15 @@ function network() {
         .attr("width", width)
         .attr("height", height);
 
+      var text = svg.selectAll(".text")
+        .data(data.text)
+        .enter();
+
+      text.append("text")
+        .attr("x", function(d) { return d.x; })
+        .attr("y", function(d) { return d.y; })
+        .text(function(d) {return d.textvalue;});
+
       var link = svg.selectAll(".link")
         .data(data.links)
         .enter().append("line")
@@ -91,12 +118,12 @@ function network() {
         .data(data.nodes)
         .enter().append("circle")
         .attr("class", "node")
-        .attr("r", 5)
+        .attr("r", function(d) {return 5*Math.sqrt(Math.sqrt(d.deg)); })
         .style("fill", function(d) { return color(d.group); })
         .call(force.drag);
 
-      node.append("title")
-        .text(function(d) { return d.name; });
+//      node.append("title")
+//        .text(function(d) { return d.name; });
 
       force.on("tick", function() {
         link.attr("x1", function(d) { return d.source.x; })
@@ -107,6 +134,24 @@ function network() {
         node.attr("cx", function(d) { return d.x; })
           .attr("cy", function(d) { return d.y; });
       });
+
+      node.on("mouseover", function(d) {
+        var xPos = parseFloat(d3.select(this).attr("cx")) + 10;
+        var yPos = parseFloat(d3.select(this).attr("cy")) + 10;
+        
+        d3.select("#tooltip")
+          .style("left", xPos + "px")
+          .style("top", yPos + "px")
+          .select("#coeftriads")
+          .text(d.coef + "/" + d.triads);
+
+        d3.select("#tooltip").classed("hidden", false);
+      });
+      
+      node.on("mouseout", function() {
+        d3.select("#tooltip").classed("hidden", true);
+      });
+
     });
   }
 
@@ -140,6 +185,13 @@ function network() {
     return chart;
   };
 
+  chart.dispatch = function (_) {
+    if (!arguments.length) return dispatch;
+    dispatch = _;
+    return chart;
+  };
+
+  d3.rebind(chart, dispatch, "on");
   return chart;
 }
 
