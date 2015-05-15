@@ -15,14 +15,20 @@
 </style>
 <body>
 <button id="button">Next Person</button>
-<button id="reset">Reset</button>
+<label for="counter" 
+       style="display: inline-block; width: 120px; text-align: right">
+       Jump to Person <span id="counter-value"></span>
+</label>
+<input type="number" min="0" max="483" step="1" value="0" id="counter">
 <div id="chart"></div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
+
 var counter = 0;
+var maxcounter = 483;
 
 var fileArray = [];
-for (i = 0; i < 189; i++){
+for (i = 0; i < maxcounter; i++){
   fileArray.push("graph/graph_"+i+".json")
 }
 
@@ -38,11 +44,11 @@ d3.select("#button")
    draw();
   });
 
-d3.select("#reset")
-  .on("click", function () {
-    counter = 0;
-    draw();
-  });
+d3.select("#counter").on("input", function() {
+  counter = this.value;
+  if (counter > maxcounter) {counter = 0;};
+  draw();
+});
 
 function draw() {
   d3.json(fileArray[counter], function (error, data) {
