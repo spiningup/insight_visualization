@@ -14,19 +14,19 @@
 
 </style>
 <body>
-<button id="button">Change Data</button>
+<button id="button">Next Person</button>
 <button id="reset">Reset</button>
 <div id="chart"></div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script>
 var counter = 0;
-var fileArray = ["graph.json", "edges_2hop.json"];
 
-d3.json(fileArray[counter], function (error, data) {
-  d3.select("#chart").select("*").remove();
-  if (error) throw error;
-  draw(data);
-});
+var fileArray = [];
+for (i = 0; i < 189; i++){
+  fileArray.push("graph/graph_"+i+".json")
+}
+
+draw()
 
 d3.select("#button")
   .on("click", function () {
@@ -35,29 +35,23 @@ d3.select("#button")
     } else {
       counter++;
     }
-    
-    d3.json(fileArray[counter], function (error, data) {
-      d3.select("#chart").select("*").remove();
-      if (error) throw error;
-      draw(data);
-    });
+   draw();
   });
 
 d3.select("#reset")
   .on("click", function () {
     counter = 0;
-
-    d3.json(fileArray[counter], function (error, data) {
-      d3.select("#chart").select("*").remove();
-      if (error) throw error;
-      draw(data);
-    });
+    draw();
   });
 
-function draw(data) {
-  d3.select("#chart")
+function draw() {
+  d3.json(fileArray[counter], function (error, data) {
+    d3.select("#chart").select("*").remove()
+    if (error) throw error;
+    d3.select("#chart")
     .datum(data)
     .call(network());
+    });
 }
 
 function network() {
