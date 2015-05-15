@@ -5,7 +5,7 @@ from graph_helper import graph_helper
 import random
 random.seed(0)
 
-def build_graph(edge_file='edges_3hop', weighted=False):
+def build_graph(edge_file='edges_4hop', weighted=False):
 
     d = np.loadtxt(edge_file)
     # get the number of nodes and edges
@@ -15,7 +15,6 @@ def build_graph(edge_file='edges_3hop', weighted=False):
     
     # construct graph
     Graph = snap.TNEANet.New(NNodes, NEdges)
-    g = graph_helper(Graph)
     
     # add nodes
     for i in xrange(NNodes):
@@ -67,7 +66,7 @@ def make_json(g, SeedNodeId, filename='graph.json'):
         nodes.append(i)
 
     edges = []
-    for NJ in SubGraph.Edges():
+    for NJ in Graph.Edges():
         EdgeId = NJ.GetId()
         i = NJ.GetSrcNId()
         j = NJ.GetDstNId()
@@ -82,7 +81,28 @@ def make_json(g, SeedNodeId, filename='graph.json'):
     seednode_sorted = idx[SeedNodeId]
     one_hop_sorted = [idx[i] for i in one_hop]
 
+    clustering_coef = []
+    NIdCCfH = g.get_clustering_coeffs()
+    for item in NIdCCfH:
+        clustering_coef.append(NIdCCfH[item])
+
+    triads = [i[1] for i in g.get_triads()]
+
     print >> f2, '{'
+    print >> f2, '  "text": ['
+    print >> f2, '    {"x":20, "y":30, "textvalue": "Number of Nodes : %d"},'%(NNodes) 
+    print >> f2, '    {"x":20, "y":50, "textvalue": "Number of Edges : %d"},'%(NEdges)
+    print >> f2, '    {"x":20, "y":70, "textvalue": "Number of One-hop Nodes : %d"},'%(len(one_hop)) 
+    print >> f2, '    {"x":20, "y":90, "textvalue": "Min Clustering Coef : %5.2f"},'%(min(clustering_coef))
+    print >> f2, '    {"x":20, "y":110, "textvalue": "Max Clustering Coef : %5.2f"},'%(max(clustering_coef))
+    print >> f2, '    {"x":20, "y":130, "textvalue": "Avg Clustering Coef : %5.2f"},'%(np.mean(clustering_coef))
+    print >> f2, '    {"x":20, "y":150, "textvalue": "Std Clustering Coef : %5.2f"},'%(np.std(clustering_coef))
+    print >> f2, '    {"x":20, "y":170, "textvalue": "Min Triads : %d"},'%(min(triads))
+    print >> f2, '    {"x":20, "y":190, "textvalue": "Max Triads : %d"},'%(max(triads))
+    print >> f2, '    {"x":20, "y":210, "textvalue": "Avg Triads : %5.2f"},'%(np.mean(triads))
+    print >> f2, '    {"x":20, "y":230, "textvalue": "Std Triads : %5.2f"},'%(np.std(triads))
+    print >> f2, '    {"x":20, "y":250, "textvalue": "Sum Triads : %d"}'%(np.sum(triads))
+    print >> f2, '  ],'
     print >> f2, '  "nodes":['
     id = 0
     for i in range(NNodes):
@@ -101,7 +121,7 @@ def make_json(g, SeedNodeId, filename='graph.json'):
 
     print >> f2, '  "links":['
     id = 0
-    for NJ in SubGraph.Edges():
+    for NJ in Graph.Edges():
         EdgeId = NJ.GetId()
         i = NJ.GetSrcNId()
         j = NJ.GetDstNId()
@@ -119,9 +139,13 @@ if __name__ == '__main__':
 
     Graph = build_graph()
 
+    # true seednode id
+    SeedNodeId = 302
+    TwohopGraph = get_subgraph(Graph, SeedNodeId, depth=2)
+    
     i_graph = 0
-    for i in range(Graph.GetNodes()):
-        SeedNodeId = i
+    for NI in TwohopGraph.Nodes():
+        SeedNodeId = NI.GetId()
         SubGraph = get_subgraph(Graph, SeedNodeId, depth=2)
         g = graph_helper(SubGraph)
         one_hop = g.get_neighbors(SeedNodeId)
