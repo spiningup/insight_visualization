@@ -1,0 +1,19 @@
+#tooltip {
+  position: absolute;
+  width: auto;
+  height: auto;
+  padding: 5px;
+  background-color: white;
+}
+
+#tooltip.hidden {
+  display: none;
+}
+
+#tooltip p {
+ margin: 0;
+ font-size: 16px;
+ line-height: 20px;
+ font-weight: bold;
+}
+
