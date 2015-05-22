@@ -23,7 +23,7 @@
        style="display: inline-block; width: 120px; text-align: right">
        Jump to Person <span id="counter-value"></span>
 </label>
-<input type="number" min="0" max="200" step="1" value="0" id="counter">
+<input type="number" min="0" max="10" step="1" value="0" id="counter">
 <div id="chart"></div>
 <div id="tooltip" class="hidden">
   <p>Coef/Triads : <span id="coeftriads">0/0</span></p>
@@ -32,11 +32,11 @@
 <script>
 
 var counter = 0;
-var maxcounter = 600;
+var maxcounter = 5;
 
 var fileArray = [];
 for (i = 0; i < maxcounter; i++){
-  fileArray.push("graph_"+i+".json")
+  fileArray.push("data/graph_"+i+".json")
 }
 
 draw()
